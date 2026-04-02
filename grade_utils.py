@@ -74,15 +74,72 @@ students = load_students('students.csv')
 for student in students:
     average = calculate_student_average(student)
     letter_grade = get_letter_grade(average)
-    print(f"{student['name']} | Average Grade = {average:.2f} | Letter Grade = {letter_grade}")
+    print(f"{student['name']} | Average Grade = {average:.1f} | Letter Grade = {letter_grade}")
 print()
+print("=== Class Statistics ===")
 stats = get_class_statistics(students)
-print(f"Class Average: {stats['average']:.2f}")
+print(f"Class Average: {stats['average']:.1f}")
 if stats['highest_student']:
-    print(f"Highest Grade: {stats['highest_student']['name']} {stats['highest']:.2f}")
+    print(f"Highest Grade: {stats['highest_student']['name']} {stats['highest']:.1f}")
 else:
     print(f"Highest Grade: {stats['highest']:.1f}")
 if stats['lowest_student']:
-    print(f"Lowest Grade: {stats['lowest_student']['name']} {stats['lowest']:.2f}")
+    print(f"Lowest Grade: {stats['lowest_student']['name']} {stats['lowest']:.1f}")
 else:
     print(f"Lowest Grade: {stats['lowest']:.1f}")
+
+print()
+print("Subject Averages:")
+subjects = set()
+for student in students:
+    subjects.update(student.keys())
+subjects.discard('name')
+for subject in subjects:
+    subject_grades = []
+    for student in students:
+        try:
+            grade = float(student[subject])
+            subject_grades.append(grade)
+        except (KeyError, ValueError):
+            continue
+    if subject_grades:
+        average = sum(subject_grades) / len(subject_grades)
+        print(f"{subject}: {average:.1f}")
+
+add_new = input("Add a new student? (yes/no): ").strip().lower()
+if add_new == 'yes':
+    student_name = input("Enter student name: ").strip()
+    student_grades = {}
+    for subject in subjects:
+        grade_input = input(f"Enter grade for {subject} (or leave blank to skip): ").strip()
+        if grade_input:
+            try:
+                student_grades[subject] = float(grade_input)
+            except ValueError:
+                print(f"Invalid input for {subject}. Skipping.")
+    new_student = {'name': student_name, **student_grades}
+    students.append(new_student)
+    print(f"Added {student_name} with grades: {student_grades}")
+elif add_new == 'no':
+    print("No new student added.")
+else:
+    print("Invalid input. No new student added.")
+
+print(f"Updated Class Statistics:")
+stats = get_class_statistics(students)
+print(f"Class Average: {stats['average']:.1f}")
+print(f"Highest Grade: {stats['highest_student']['name']} {stats['highest']:.1f}")
+print(f"Lowest Grade: {stats['lowest_student']['name']} {stats['lowest']:.1f}")
+print()
+print("Report written to grade_report.txt")
+with open("students_summary.csv", mode='w', encoding='utf-8', newline='') as file:
+    fieldnames = ['name'] + list(subjects) + ['average', 'letter_grade']
+    writer = csv.DictWriter(file, fieldnames=fieldnames)
+    writer.writeheader()
+    for student in students:
+        average = calculate_student_average(student)
+        letter_grade = get_letter_grade(average)
+        row = {**student, 'average': f"{average:.1f}", 'letter_grade': letter_grade}
+        writer.writerow(row)
+print("Summary written to students_summary.csv")
+print("Done!")
